@@ -94,3 +94,9 @@ query I
 select spherical_angle(-pi()+0.1, pi()/4, pi()-0.1, pi()/4) - acos(pow(cos(0.1), 2))
 ----
 0.0
+
+# Degrees variant
+query I
+select angular_separation_deg(0, 0, 0, 30)
+----
+30
