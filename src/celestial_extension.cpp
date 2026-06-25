@@ -1,5 +1,9 @@
 #define DUCKDB_EXTENSION_MAIN
 
+// Windows...
+// Switch to std::numbers::pi rather than M_PI in C++20.
+#define _USE_MATH_DEFINES
+
 #include <cmath>
 #include <algorithm>
 
