@@ -97,7 +97,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 	auto info = CreateScalarFunctionInfo(fn);
 	desc = {.parameter_names = {"ra1", "dec1", "ra2", "dec2"},
 	        .description = "Returns the angular separation in radians between two points on a sphere given in radians.",
-	        .examples = {"angular_separation_rad(0, 0, 1, 0)"},
+	        .examples = {"angular_separation_rad(0, 0, 1, 0)", "spherical_angle(0, 0, 1, 0)"},
 	        .categories = {"astronomy", "geometry"}};
 	info.on_conflict = OnCreateConflict::ALTER_ON_CONFLICT;
 	info.descriptions.push_back(desc);
