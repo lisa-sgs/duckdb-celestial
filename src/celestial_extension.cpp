@@ -9,6 +9,7 @@
 
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
+#include "duckdb/function/function_set.hpp"
 #include "duckdb/function/scalar_function.hpp"
 #include "duckdb/parser/parsed_data/create_scalar_function_info.hpp"
 
@@ -86,20 +87,41 @@ inline void SphericalAngleFunction(DataChunk &args, ExpressionState &state, Vect
 }
 
 static void LoadInternal(ExtensionLoader &loader) {
-	auto spherical_angle_fun = ScalarFunction(
-	    "spherical_angle", {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE},
-	    LogicalType::DOUBLE, SphericalAngleFunction<false>);
-	loader.RegisterFunction(spherical_angle_fun);
+	FunctionDescription desc;
 
-	auto angular_separation_rad_fun = ScalarFunction(
-	    "angular_separation_rad", {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE},
-	    LogicalType::DOUBLE, SphericalAngleFunction<false>);
-	loader.RegisterFunction(angular_separation_rad_fun);
+	auto fn =
+	    ScalarFunction("angular_separation_rad",
+	                   {FunctionParameter("ra1", LogicalType::DOUBLE), FunctionParameter("dec1", LogicalType::DOUBLE),
+	                    FunctionParameter("ra2", LogicalType::DOUBLE), FunctionParameter("dec2", LogicalType::DOUBLE)},
+	                   LogicalType::DOUBLE, SphericalAngleFunction<false>);
+	auto info = CreateScalarFunctionInfo(fn);
+	desc = {.parameter_names = {"ra1", "dec1", "ra2", "dec2"},
+	        .description = "Returns the angular separation in radians between two points on a sphere given in radians.",
+	        .examples = {"angular_separation_rad(0, 0, 1, 0)"},
+	        .categories = {"astronomy", "geometry"}};
+	info.on_conflict = OnCreateConflict::ALTER_ON_CONFLICT;
+	info.descriptions.push_back(desc);
+	loader.RegisterFunction(std::move(info));
 
-	auto angular_separation_deg_fun = ScalarFunction(
-	    "angular_separation_deg", {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE},
-	    LogicalType::DOUBLE, SphericalAngleFunction<true>);
-	loader.RegisterFunction(angular_separation_deg_fun);
+	// Deprecated alias for angular_separation_rad.
+	fn.name = "spherical_angle";
+	info = CreateScalarFunctionInfo(fn);
+	info.on_conflict = OnCreateConflict::ALTER_ON_CONFLICT;
+	info.descriptions.push_back(desc);
+	loader.RegisterFunction(std::move(info));
+
+	fn = ScalarFunction("angular_separation_deg",
+	                    {FunctionParameter("ra1", LogicalType::DOUBLE), FunctionParameter("dec1", LogicalType::DOUBLE),
+	                     FunctionParameter("ra2", LogicalType::DOUBLE), FunctionParameter("dec2", LogicalType::DOUBLE)},
+	                    LogicalType::DOUBLE, SphericalAngleFunction<true>);
+	info = CreateScalarFunctionInfo(fn);
+	info.on_conflict = OnCreateConflict::ALTER_ON_CONFLICT;
+	desc = {.parameter_names = {"ra1", "dec1", "ra2", "dec2"},
+	        .description = "Returns the angular separation in degrees between two points on a sphere given in degrees.",
+	        .examples = {"angular_separation_deg(0, 0, 0, 30)"},
+	        .categories = {"astronomy", "geometry"}};
+	info.descriptions.push_back(desc);
+	loader.RegisterFunction(std::move(info));
 }
 
 void CelestialExtension::Load(ExtensionLoader &loader) {
